@@ -32,7 +32,7 @@
 #define CYCLES_PER_MICRO_SEC_DEFAULT 4915
 #define CCI_MAX_DELAY 1000000
 
-#define CCI_TIMEOUT msecs_to_jiffies(500)
+#define CCI_TIMEOUT msecs_to_jiffies(1000)
 
 /* TODO move this somewhere else */
 #define MSM_CCI_DRV_NAME "msm_cci"
@@ -1506,6 +1506,9 @@ static int32_t msm_cci_init(struct v4l2_subdev *sd,
 			flush_workqueue(cci_dev->write_wq[i]);
 		}
 	}
+    
+    pr_info("[%s](%d)  yzm_ccis   set to CCI_STATE_ENABLED \n", __func__, __LINE__);
+    
 	cci_dev->cci_state = CCI_STATE_ENABLED;
 
 	return 0;
@@ -1583,6 +1586,9 @@ static int32_t msm_cci_release(struct v4l2_subdev *sd)
 		cci_dev->cci_gpio_tbl_size, 0);
 	for (i = 0; i < MASTER_MAX; i++)
 		cci_dev->i2c_freq_mode[i] = I2C_MAX_MODES;
+    
+    pr_info("[%s](%d)  yzm_ccis   set to CCI_STATE_DISABLED \n", __func__, __LINE__);
+    
 	cci_dev->cci_state = CCI_STATE_DISABLED;
 	cci_dev->cycles_per_us = 0;
 	cci_dev->cci_clk_src = 0;
@@ -2172,6 +2178,9 @@ static int msm_cci_probe(struct platform_device *pdev)
 	rc = of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
 	if (rc)
 		pr_err("%s: failed to add child nodes, rc=%d\n", __func__, rc);
+    
+    pr_info("[%s](%d)  yzm_ccis   set to CCI_STATE_DISABLED \n", __func__, __LINE__);
+    
 	new_cci_dev->cci_state = CCI_STATE_DISABLED;
 	g_cci_subdev = &new_cci_dev->msm_sd.sd;
 	for (i = 0; i < MASTER_MAX; i++) {

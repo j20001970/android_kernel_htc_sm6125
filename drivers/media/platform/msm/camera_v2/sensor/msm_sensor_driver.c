@@ -25,6 +25,10 @@
 
 #define SENSOR_MAX_MOUNTANGLE (360)
 
+
+struct mutex *msm_sensor_power_mutex;
+
+
 static struct v4l2_file_operations msm_sensor_v4l2_subdev_fops;
 static int32_t msm_sensor_driver_platform_probe(struct platform_device *pdev);
 
@@ -45,6 +49,7 @@ static int msm_sensor_platform_remove(struct platform_device *pdev)
 
 	msm_sensor_free_sensor_data(s_ctrl);
 	kfree(s_ctrl->msm_sensor_mutex);
+	kfree(msm_sensor_power_mutex);
 	kfree(s_ctrl->sensor_i2c_client);
 	kfree(s_ctrl);
 	g_sctrl[pdev->id] = NULL;
@@ -1381,7 +1386,13 @@ static int32_t msm_sensor_driver_parse(struct msm_sensor_ctrl_t *s_ctrl)
 		rc = -ENOMEM;
 		goto FREE_SENSOR_I2C_CLIENT;
 	}
-
+	msm_sensor_power_mutex = kzalloc(sizeof(*msm_sensor_power_mutex),
+		GFP_KERNEL);
+	if (!msm_sensor_power_mutex) {
+		rc = -ENOMEM;
+		goto FREE_SENSOR_I2C_CLIENT;
+	}
+    
 	/* Parse dt information and store in sensor control structure */
 	rc = msm_sensor_driver_get_dt_data(s_ctrl);
 	if (rc < 0) {
@@ -1391,6 +1402,7 @@ static int32_t msm_sensor_driver_parse(struct msm_sensor_ctrl_t *s_ctrl)
 
 	/* Initialize mutex */
 	mutex_init(s_ctrl->msm_sensor_mutex);
+	mutex_init(msm_sensor_power_mutex);
 
 	/* Initialize v4l2 subdev info */
 	s_ctrl->sensor_v4l2_subdev_info = msm_sensor_driver_subdev_info;
@@ -1418,6 +1430,7 @@ FREE_DT_DATA:
 	kfree(s_ctrl->sensordata);
 FREE_MUTEX:
 	kfree(s_ctrl->msm_sensor_mutex);
+	kfree(msm_sensor_power_mutex);
 FREE_SENSOR_I2C_CLIENT:
 	kfree(s_ctrl->sensor_i2c_client);
 	return rc;
@@ -1536,6 +1549,7 @@ static int msm_sensor_driver_i2c_remove(struct i2c_client *client)
 	g_sctrl[s_ctrl->id] = NULL;
 	msm_sensor_free_sensor_data(s_ctrl);
 	kfree(s_ctrl->msm_sensor_mutex);
+	kfree(msm_sensor_power_mutex);
 	kfree(s_ctrl->sensor_i2c_client);
 	kfree(s_ctrl);
 

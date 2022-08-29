@@ -666,6 +666,11 @@ irqreturn_t usbin_ov_irq_handler(int irq, void *data);
 irqreturn_t sdam_sts_change_irq_handler(int irq, void *data);
 int smblib_get_prop_input_suspend(struct smb_charger *chg,
 				union power_supply_propval *val);
+
+//hzn add for htc demoflo apk to stop charging
+int smblib_get_prop_battery_charging(struct smb_charger *chg,
+				union power_supply_propval *val);
+
 int smblib_get_prop_batt_present(struct smb_charger *chg,
 				union power_supply_propval *val);
 int smblib_get_prop_batt_capacity(struct smb_charger *chg,
@@ -688,6 +693,11 @@ int smblib_get_prop_batt_iterm(struct smb_charger *chg,
 				union power_supply_propval *val);
 int smblib_set_prop_input_suspend(struct smb_charger *chg,
 				const union power_supply_propval *val);
+
+//hzn add for htc demoflo apk to stop charging
+int smblib_set_prop_battery_charging(struct smb_charger *chg,
+				const union power_supply_propval *val);
+
 int smblib_set_prop_batt_capacity(struct smb_charger *chg,
 				const union power_supply_propval *val);
 int smblib_set_prop_batt_status(struct smb_charger *chg,

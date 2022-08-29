@@ -87,7 +87,7 @@
 			reg = <0x4e00000 0xcd00>;
 			interrupt-parent = <&intc>;
 			interrupts = <0 255 0>;
-			usb-phy = <&qusb_phy0>, <&usb_qmp_phy>;
+			usb-phy = <&qusb_phy0>, <&usb_nop_phy>;
 			tx-fifo-resize;
 			linux,sysdev_is_parent;
 			snps,disable-clk-gating;
@@ -97,7 +97,7 @@
 			snps,hird-threshold = /bits/ 8 <0x10>;
 			snps,usb3_lpm_capable;
 			usb-core-id = <0>;
-			maximum-speed = "super-speed";
+			maximum-speed = "high-speed";
 			dr_mode = "otg";
 		};
 
@@ -147,7 +147,7 @@
 		qcom,vdd-voltage-level = <0 925000 970000>;
 		qcom,tune2-efuse-bit-pos = <25>;
 		qcom,tune2-efuse-num-bits = <4>;
-		qcom,qusb-phy-init-seq = <0xf8 0x80
+		qcom,qusb-phy-init-seq = <0xb8 0x80
 					0xb3 0x84
 					0x81 0x88
 					0xc0 0x8c
@@ -170,8 +170,12 @@
 		reset-names = "phy_reset";
 	};
 
+	usb_nop_phy:usb_nop_phy {
+		 compatible = "usb_nop_xceiv";
+	};
 	/* Primary USB port related QMP USB PHY */
 	usb_qmp_phy: ssphy@1615000 {
+		status = "disabled";
 		compatible = "qcom,usb-ssphy-qmp-usb3-or-dp";
 		reg = <0x01615000 0x1000>,
 			<0x03cb244 0x4>;

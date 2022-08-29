@@ -436,6 +436,15 @@
 		#size-cells = <2>;
 		ranges;
 
+		ramoops: ramoops@9ff00000 {
+			compatible = "ramoops";
+			reg = <0x0 0x9ff00000 0x0 0x100000>;/* reg address & max buffer*/
+			record-size = <0x20000>; /* dump oops/panic log buffer */
+			console-size = <0x80000>;/* kernel message buffer */
+			ftrace-size = <0x00000>; /* tracing and profiling buffer */
+			pmsg-size = <0x20000>;   /* userspace messages buffer */
+		};
+
 		hyp_region: hyp_region@45700000 {
 			compatible = "removed-dma-pool";
 			no-map;
@@ -463,7 +472,7 @@
 		removed_region: removed_region@46200000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0 0x46200000 0 0x2d00000>;
+			reg = <0 0x46200000 0 0x4900000>;
 		};
 
 		pil_camera_mem: camera_region@4ab00000 {
@@ -1954,7 +1963,7 @@
 
 	qcom_seecom: qseecom@46d00000 {
 		compatible = "qcom,qseecom";
-		reg = <0x46d00000 0x2200000>;
+		reg = <0x46d00000 0x3e00000>;
 		reg-names = "secapp-region";
 		memory-region = <&qseecom_mem>;
 		qcom,hlos-num-ce-hw-instances = <1>;
@@ -1987,7 +1996,7 @@
 
 	qcom_smcinvoke: smcinvoke@46d00000 {
 		compatible = "qcom,smcinvoke";
-		reg = <0x46d00000 0x2200000>;
+		reg = <0x46d00000 0x3E00000>;
 		reg-names = "secapp-region";
 	};
 
@@ -2896,6 +2905,7 @@
 &pmi632_gpios {
 	conn_therm {
 		conn_therm_default: conn_therm_default {
+			//pins = "gpio3";
 			pins = "gpio1";
 			bias-high-impedance;
 		};
@@ -2903,6 +2913,7 @@
 
 	skin_therm {
 		skin_therm_default: skin_therm_default {
+			//pins = "gpio6";
 			pins = "gpio3";
 			bias-high-impedance;
 		};
@@ -3065,11 +3076,11 @@
 
 &qupv3_se1_i2c {
 	status="ok";
-	#include "pm8008.dtsi"
+	#include "wl2864c.dtsi"
 };
 
 &tlmm {
-	pm8008_active: pm8008_active {
+	wl2864c_active: wl2864c_active {
 		mux {
 			pins = "gpio49";
 			function = "gpio";
@@ -3077,16 +3088,17 @@
 
 		config {
 			pins = "gpio49";
-			bias-pull-up;
-			output-high;
+			//bias-pull-up;
+			output-low;
 			drive-strength = <2>;
 		};
 	};
 };
 
-&pm8008_gpios {
+/*
+&wl2864c_gpios {
 	gpio1_active {
-		pm8008_gpio1_active: pm8008_gpio1_active {
+		wl2864c_gpio1_active: wl2864c_gpio1_active {
 			pins = "gpio1";
 			function = "normal";
 			power-source = <1>;
@@ -3096,52 +3108,51 @@
 	};
 };
 
-&pm8008_chip {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pm8008_active>;
-};
-
-&pm8008_regulators {
+&wl2864c_regulators {
 	vdd_l1_l2-supply = <&S6A>;
 };
+*/
 
-&pm8008_9 {
-	/* GPIO1 pinctrl config */
-	pinctrl-names = "default";
-	pinctrl-0 = <&pm8008_gpio1_active>;
-};
-
-&L1P {
+/*
+&WL2864C_L1P {
+	regulator-min-microvolt = <1000000>;
 	regulator-max-microvolt = <1200000>;
-	qcom,min-dropout-voltage = <100000>;
 };
+
+
+&WL2864C_L2P {
+	regulator-min-microvolt = <1000000>;
+	regulator-max-microvolt = <1200000>;
+	};
 
 &L2P {
 	regulator-max-microvolt = <1104000>;
 	qcom,min-dropout-voltage = <100000>;
 };
 
-&L3P {
+&WL2864C_L3P {
 	regulator-min-microvolt = <2800000>;
 	regulator-max-microvolt = <2800000>;
 };
 
-&L4P {
+&WL2864C_L4P {
 	regulator-min-microvolt = <2800000>;
 	regulator-max-microvolt = <2800000>;
 };
 
-&L5P {
+&WL2864C_L5P {
 	regulator-min-microvolt = <2800000>;
 	regulator-max-microvolt = <2800000>;
 };
 
-&L6P {
-	regulator-min-microvolt = <3000000>;
+&WL2864C_L6P {
+	regulator-min-microvolt = <2800000>;
 	regulator-max-microvolt = <3000000>;
 };
 
-&L7P {
-	regulator-min-microvolt = <3000000>;
-	regulator-max-microvolt = <3000000>;
+&WL2864C_L7P {
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-always-on;
 };
+*/

@@ -200,6 +200,7 @@ struct dsi_panel {
 	bool ulps_feature_enabled;
 	bool ulps_suspend_enabled;
 	bool allow_phy_power_off;
+	bool lcd_reset_set_flag;
 	atomic_t esd_recovery_pending;
 
 	bool panel_initialized;

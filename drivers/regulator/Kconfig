@@ -1090,5 +1090,9 @@ config VIRTIO_REGULATOR
 	---help---
 	  This is the virtual regulator driver for virtio.
 
+config REGULATOR_WL2864C
+        bool "Qualcomm Technologies Inc.  regulator driver"
+        default n
+
 endif
 

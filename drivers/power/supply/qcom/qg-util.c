@@ -366,7 +366,6 @@ int qg_get_battery_temp(struct qpnp_qg *chip, int *temp)
 		pr_err("Failed reading BAT_TEMP over ADC rc=%d\n", rc);
 		return rc;
 	}
-	pr_debug("batt_temp = %d\n", *temp);
 
 	return 0;
 }

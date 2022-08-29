@@ -1542,6 +1542,7 @@ static int smb5_init_dc_psy(struct smb5 *chip)
  * BATT PSY REGISTRATION *
  *************************/
 static enum power_supply_property smb5_batt_props[] = {
+	POWER_SUPPLY_PROP_FULL_LEVEL_DIS_BATT_CHG, //hzn add for htc demoflo apk to stop charging
 	POWER_SUPPLY_PROP_INPUT_SUSPEND,
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_HEALTH,
@@ -1588,6 +1589,11 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 	int rc = 0;
 
 	switch (psp) {
+	//hzn add for htc demoflo apk to stop charging
+	case POWER_SUPPLY_PROP_FULL_LEVEL_DIS_BATT_CHG:
+		rc = smblib_get_prop_battery_charging(chg, val);
+		break;
+	//add end
 	case POWER_SUPPLY_PROP_STATUS:
 		rc = smblib_get_prop_batt_status(chg, val);
 		break;
@@ -1737,6 +1743,11 @@ static int smb5_batt_set_prop(struct power_supply *psy,
 	struct smb_charger *chg = power_supply_get_drvdata(psy);
 
 	switch (prop) {
+	//hzn add for htc demoflo apk to stop charging
+	case POWER_SUPPLY_PROP_FULL_LEVEL_DIS_BATT_CHG:
+		rc = smblib_set_prop_battery_charging(chg, val);
+		break;
+	//add end
 	case POWER_SUPPLY_PROP_STATUS:
 		rc = smblib_set_prop_batt_status(chg, val);
 		break;
@@ -1828,6 +1839,7 @@ static int smb5_batt_prop_is_writeable(struct power_supply *psy,
 		enum power_supply_property psp)
 {
 	switch (psp) {
+	case POWER_SUPPLY_PROP_FULL_LEVEL_DIS_BATT_CHG: //hzn add for htc demoflo apk to stop charging
 	case POWER_SUPPLY_PROP_STATUS:
 	case POWER_SUPPLY_PROP_INPUT_SUSPEND:
 	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
@@ -2910,6 +2922,16 @@ static int smb5_init_hw(struct smb5 *chip)
 				rc);
 		return rc;
 	}
+	
+	//hzn add for bug:383705
+	rc = smblib_masked_write(chg, TYPE_C_DEBUG_ACCESS_SINK_REG, TYPEC_DEBUG_ACCESS_SINK_MASK, 0x17);
+	if (rc < 0) {
+		dev_err(chg->dev, "Couldn't configure 154a rc=%d\n", rc);
+		return rc;
+	}
+	smblib_read(chg, TYPE_C_DEBUG_ACCESS_SINK_REG, &val);
+	pr_err("hzn:154a = 0x%02x --------------------------\n", val);
+	//add end
 
 	if (chg->connector_pull_up != -EINVAL) {
 		rc = smb5_configure_internal_pull(chg, CONN_THERM,

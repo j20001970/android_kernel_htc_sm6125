@@ -1,0 +1,72 @@
+/* Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+#include <dt-bindings/interrupt-controller/irq.h>
+
+wl2864c_29: wl2864c@29 {
+	compatible = "pmic,wl2864c";
+	reg = <0x29>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	wl2846c-enable-gpios = <&tlmm 49 0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&wl2864c_active>;
+
+	wl2864c_regulators: qcom,wl2864c-regulator {
+		compatible = "qcom,wl2864c-regulator";
+		vdd_l1_l2-supply = <&S6A>;
+
+		/*wl2864c_en-supply = <&WL2864C_EN>;*/
+		WL2864C_L1P: wl2864c-l1@1 {
+			regulator-name = "WL2864C_LDO1";
+			regulator-min-microvolt = <600000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		WL2864C_L2P: wl2864c-l2@2 {
+			regulator-name = "WL2864C_LDO2";
+			regulator-min-microvolt = <600000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		WL2864C_L3P: wl2864c-l3@3 {
+			regulator-name = "WL2864C_LDO3";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <4300000>;
+		};
+
+		WL2864C_L4P: wl2864c-l4@4 {
+			regulator-name = "WL2864C_LDO4";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <4300000>;
+		};
+
+		WL2864C_L5P: wl2864c-l5@5 {
+			regulator-name = "WL2864C_LDO5";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <4300000>;
+		};
+
+		WL2864C_L6P: wl2864c-l6@6 {
+			regulator-name = "WL2864C_LDO6";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <4300000>;
+		};
+
+		WL2864C_L7P: wl2864c-l7@7 {
+			regulator-name = "WL2864C_LDO7";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-always-on;
+		};
+	};
+};

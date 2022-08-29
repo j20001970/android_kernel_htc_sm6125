@@ -665,13 +665,18 @@ static int32_t msm_flash_low(
 			if (flash_data->flash_current[i] >= 0 &&
 				flash_data->flash_current[i] <
 				max_current) {
-				curr = flash_data->flash_current[i];
+                if(i == 0)
+                {
+                    curr = flash_data->flash_current[i];
+                }
+                pr_info("[%s](%d)  yzm_fh  i=%d  low_flash_current=%d \n",
+                __func__, __LINE__, i, curr);
 			} else {
 				curr = flash_ctrl->torch_op_current[i];
-				pr_debug("LED current clamped to %d\n",
-					curr);
+                pr_info("[%s](%d)  yzm_fh  i=%d  low_flash_current=%d \n",
+                __func__, __LINE__, i, curr);
 			}
-			CDBG("low_flash_current[%d] = %d", i, curr);
+
 			led_trigger_event(flash_ctrl->torch_trigger[i],
 				curr);
 		}
@@ -702,13 +707,18 @@ static int32_t msm_flash_high(
 			if (flash_data->flash_current[i] >= 0 &&
 				flash_data->flash_current[i] <
 				max_current) {
-				curr = flash_data->flash_current[i];
+                if(i == 0)
+                {
+                    curr = flash_data->flash_current[i];
+                }
+                pr_info("[%s](%d)  yzm_fh  i=%d  high_flash_current=%d \n",
+                __func__, __LINE__, i, curr);
 			} else {
 				curr = flash_ctrl->flash_op_current[i];
-				pr_debug("LED flash_current[%d] clamped %d\n",
-					i, curr);
+                pr_info("[%s](%d)  yzm_fh  i=%d  high_flash_current=%d \n",
+                __func__, __LINE__, i, curr);
 			}
-			CDBG("high_flash_current[%d] = %d", i, curr);
+
 			led_trigger_event(flash_ctrl->flash_trigger[i],
 				curr);
 		}

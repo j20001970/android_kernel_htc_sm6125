@@ -17,6 +17,7 @@
 #include "trinket-sde-display.dtsi"
 #include <dt-bindings/clock/qcom,gcc-trinket.h>
 #include "trinket-camera-sensor-idp.dtsi"
+#include "trinket-fpsensor.dtsi"
 
 &qupv3_se1_i2c {
 	status = "ok";
@@ -26,8 +27,9 @@
 &soc {
 	mtp_batterydata: qcom,battery-data {
 		qcom,batt-id-range-pct = <15>;
-		#include "qg-batterydata-ascent-3450mah.dtsi"
-		#include "qg-batterydata-mlp356477-2800mah.dtsi"
+		#include "Ontim_Q6655_SCUD_5000mAH_PMI632_200K.dtsi" // 200k
+		#include "Ontim_Q6655_Veken_5000mAH_PMI632_150k.dtsi" // 150k
+		#include "Ontim_Q6655_SCUD_5000mAH_PMI632.dtsi" // 100k
 	};
 };
 
@@ -74,7 +76,6 @@
 		status = "disabled";
 	};
 };
-
 &qupv3_se1_i2c {
 	status = "ok";
 	nq@28 {
@@ -94,7 +95,6 @@
 				&nfc_clk_req_suspend>;
 	};
 };
-
 &sdhc_1 {
 	vdd-supply = <&pm6125_l24>;
 	qcom,vdd-voltage-level = <2950000 2950000>;
@@ -128,37 +128,41 @@
 	pinctrl-0 = <&sdc2_clk_on  &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
 	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &sdc2_cd_off>;
 
-	cd-gpios = <&tlmm 98 GPIO_ACTIVE_LOW>;
+	cd-gpios = <&tlmm 98 GPIO_ACTIVE_HIGH>;
 
 	status = "ok";
 };
 
 &pmi632_qg {
 	qcom,battery-data = <&mtp_batterydata>;
-	qcom,qg-iterm-ma = <100>;
+	qcom,qg-iterm-ma = <350>;
 	qcom,hold-soc-while-full;
 	qcom,linearize-soc;
 	qcom,qg-use-s7-ocv;
+	qcom,shutdown-soc-threshold = <10>;
 };
 
 &pmi632_charger {
 	qcom,battery-data = <&mtp_batterydata>;
 	qcom,suspend-input-on-debug-batt;
 	qcom,sw-jeita-enable;
-	qcom,step-charging-enable;
-	/* SMB1355 only */
-	qcom,sec-charger-config = <2>;
+	//qcom,step-charging-enable;
+	/* 0 - No secondary charger. */
+	qcom,sec-charger-config = <0>;
 	dpdm-supply = <&qusb_phy0>;
 	qcom,charger-temp-max = <800>;
 	qcom,smb-temp-max = <800>;
-	qcom,auto-recharge-soc = <98>;
+	qcom,auto-recharge-soc = <99>;
 	qcom,flash-disable-soc = <10>;
 	qcom,hw-die-temp-mitigation;
 	qcom,hw-connector-mitigation;
 	qcom,connector-internal-pull-kohm = <100>;
 	qcom,float-option = <1>;
-	qcom,thermal-mitigation = <3000000 2500000
-			2000000 1500000 1000000 500000>;
+	qcom,thermal-mitigation = <2900000 2900000 2500000 2200000 2000000 1700000 1500000 1000000 500000>;
+	//hzn add
+	qcom,chg-term-src = <1>;
+	qcom,chg-term-current-ma = <(-200)>;
+	//add end
 };
 
 &usb0 {
@@ -223,6 +227,22 @@
 			gpio-key,wakeup;
 		};
 	};
+        //gpio board id
+	gpio_boardid {
+		compatible = "gpio,boardid";
+		gpio,boardid0 = <&tlmm 64 0>;
+		gpio,boardid1 = <&tlmm 119 0>;
+		gpio,boardid2 = <&tlmm 125 0>;
+		gpio,boardid3 = <&tlmm 82 0>;
+	};
+	//adc borad id
+	/*
+	board_id_adc {
+		status = "ok";
+		compatible = "ontim,board-id-adc";
+		qcom,board_id-vadc = <&pm660_vadc>;
+	};
+	*/
 };
 
 &tlmm {
@@ -299,6 +319,30 @@
 	qcom,platform-bklight-en-gpio = <&pmi632_gpios 6 0>;
 };
 
+&dsi_ft8719_tianma_video {
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_pwm";
+	pwms = <&pm6125_pwm 0 0>;
+	qcom,bl-pmic-pwm-period-usecs = <100>;
+	qcom,mdss-dsi-bl-min-level = <1>;
+	qcom,mdss-dsi-bl-max-level = <4095>;
+	qcom,platform-reset-gpio = <&tlmm 90 0>;
+	qcom,platform-bklight-en-gpio = <&pmi632_gpios 6 0>;
+	ontim,lcd-reset-set-flag;
+};
+
+&dsi_ft8719_tcl_video {
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_pwm";
+	pwms = <&pm6125_pwm 0 0>;
+	qcom,bl-pmic-pwm-period-usecs = <100>;
+	qcom,mdss-dsi-bl-min-level = <1>;
+	qcom,mdss-dsi-bl-max-level = <4095>;
+	qcom,platform-reset-gpio = <&tlmm 90 0>;
+	qcom,platform-bklight-en-gpio = <&pmi632_gpios 6 0>;
+	ontim,lcd-reset-set-flag;
+};
+
 &dsi_td4330_truly_cmd {
 	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
 	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_pwm";
@@ -339,8 +383,54 @@
 	qcom,platform-bklight-en-gpio = <&pmi632_gpios 6 0>;
 };
 
+&dsi_ft8719_tianma_vid_display {
+	qcom,dsi-display-active;
+};
+
+&dsi_ft8719_tcl_vid_display {
+	qcom,dsi-display-active;
+};
+
 &qupv3_se2_i2c {
 	status = "okay";
+	focaltech@38 {
+		compatible = "focaltech,touch";
+		reg = <0x38>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <88 0x02>;
+		vcc_i2c-supply = <&L9A>;
+		//avdd-supply = <&pm660l_l6>;
+		lab-supply = <&lcdb_ldo_vreg>;
+		ibb-supply = <&lcdb_ncp_vreg>;
+		focaltech,irq-gpio  = <&tlmm 88 0x02>;
+		focaltech,reset-gpio = <&tlmm 87 0x01>;
+		focaltech,ic_type = "FT8719";
+		pinctrl-names = "pmx_ts_active","pmx_ts_suspend","pmx_ts_release";
+		pinctrl-0 = <&ts_int_active &ts_reset_active>;
+		pinctrl-1 = <&ts_int_suspend &ts_reset_suspend>;
+		pinctrl-2 = <&ts_release>;
+		focaltech,max-touch-number = <10>;
+		focaltech,display-coords =  <0 0 1080 2340>;
+		focaltech,have-key;
+		focaltech,key-number = <0>;
+		focaltech,keys = <139 102 158>;
+		focaltech,key-y-coord = <3000>;
+		focaltech,key-x-coords = <200 600 800>;
+	};
+};
+
+&qupv3_se3_i2c {
+	status = "okay";
+	tfa98xx@34 {
+		compatible = "nxp,tfa98xx";
+		reg = <0x34>;
+		reset-gpio= <&tlmm 124 0>;
+	};
+};
+
+/*
+&qupv3_se2_i2c {
+	status = "disabled";
 	qcom,i2c-touch-active="synaptics,tcm-i2c";
 
 	synaptics_tcm@20 {
@@ -380,4 +470,4 @@
 		himax,rst-gpio = <&tlmm 87 0x00>;
 		report_type = <1>;
 	};
-};
+};*/

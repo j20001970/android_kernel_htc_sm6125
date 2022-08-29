@@ -136,5 +136,5 @@ obj-$(CONFIG_REGULATOR_SPM) += spm-regulator.o
 obj-$(CONFIG_REGULATOR_RPMH) += rpmh-regulator.o
 obj-$(CONFIG_REGULATOR_STUB) += stub-regulator.o
 obj-$(CONFIG_VIRTIO_REGULATOR) += virtio_regulator.o
-
+obj-$(CONFIG_REGULATOR_WL2864C) += wl2864c-regulator.o
 ccflags-$(CONFIG_REGULATOR_DEBUG) += -DDEBUG

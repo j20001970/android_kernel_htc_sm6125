@@ -27,6 +27,13 @@
 #include "step-chg-jeita.h"
 #include "storm-watch.h"
 #include "schgm-flash.h"
+//hzn add for runin test
+#include <linux/module.h>
+
+unsigned int factory_charging = 0;
+module_param(factory_charging, uint, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(factory_charging, "SMBCHG SUSPEND USB PATH");
+//add end
 
 #define smblib_err(chg, fmt, ...)		\
 	pr_err("%s: %s: " fmt, chg->name,	\
@@ -1893,6 +1900,15 @@ int smblib_get_prop_input_suspend(struct smb_charger *chg,
 		 && get_client_vote(chg->dc_suspend_votable, USER_VOTER);
 	return 0;
 }
+//hzn add for htc demoflo apk to stop charging
+int smblib_get_prop_battery_charging(struct smb_charger *chg,
+				  union power_supply_propval *val)
+{
+	val->intval
+		= (get_client_vote(chg->chg_disable_votable, USER_VOTER) == 1);
+	return 0;
+}
+
 
 int smblib_get_prop_batt_present(struct smb_charger *chg,
 				union power_supply_propval *val)
@@ -1916,6 +1932,7 @@ int smblib_get_prop_batt_capacity(struct smb_charger *chg,
 				  union power_supply_propval *val)
 {
 	int rc = -EINVAL;
+	static int tries = 1; //hzn add for runin test
 
 	if (chg->fake_capacity >= 0) {
 		val->intval = chg->fake_capacity;
@@ -1923,6 +1940,30 @@ int smblib_get_prop_batt_capacity(struct smb_charger *chg,
 	}
 
 	rc = smblib_get_prop_from_bms(chg, POWER_SUPPLY_PROP_CAPACITY, val);
+	//hzn add for runin test
+	if (factory_charging) {
+		if ((val->intval > 64) && (tries > 0)) {
+			tries ++;
+			if (tries > 7) {
+				tries = 0;
+				vote(chg->usb_icl_votable, USER_VOTER, true, 0);
+				pr_info("Suspend USB path since exceed CUTOFF capacity\n");
+			}
+		} else {
+			if ((val->intval < 60) && (!tries)) {
+				vote(chg->usb_icl_votable, USER_VOTER, false, 0);
+				pr_info("Restore usb charging\n");
+				tries = 1;
+			}
+		}
+	} else {
+		if (!tries) {
+			vote(chg->usb_icl_votable, USER_VOTER, false, 0);
+			pr_info("Restore usb charging app set\n");
+			tries = 1;
+		}
+	}
+	// add end
 
 	return rc;
 }
@@ -2283,6 +2324,24 @@ int smblib_set_prop_input_suspend(struct smb_charger *chg,
 	power_supply_changed(chg->batt_psy);
 	return rc;
 }
+//hzn add for htc demoflo apk to stop charging
+int smblib_set_prop_battery_charging(struct smb_charger *chg,
+				  const union power_supply_propval *val)
+{
+	int rc;
+
+	/* vote 0mA when suspended */
+	rc = vote(chg->chg_disable_votable, USER_VOTER, (bool)val->intval, 0);
+	if (rc < 0) {
+		smblib_err(chg, "Couldn't vote to %s battery charging rc=%d\n",
+			(bool)val->intval ? "suspend" : "resume", rc);
+		return rc;
+	}
+
+	power_supply_changed(chg->batt_psy);
+	return rc;
+}
+
 
 int smblib_set_prop_batt_capacity(struct smb_charger *chg,
 				  const union power_supply_propval *val)
@@ -2332,6 +2391,8 @@ int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 
 	vote(chg->fcc_votable, THERMAL_DAEMON_VOTER, true,
 			chg->thermal_mitigation[chg->system_temp_level]);
+	pr_err("hzn: system_temp_level = %d ----\n", chg->system_temp_level);
+	pr_err("hzn: thermal_mitigation = %d ----\n", chg->thermal_mitigation[chg->system_temp_level]);
 	return 0;
 }
 
@@ -3505,17 +3566,20 @@ static int smblib_get_prop_ufp_mode(struct smb_charger *chg)
 
 	switch (stat & DETECTED_SRC_TYPE_MASK) {
 	case SNK_RP_STD_BIT:
+		case SNK_RP_STD_DAM_BIT:
 		return POWER_SUPPLY_TYPEC_SOURCE_DEFAULT;
 	case SNK_RP_1P5_BIT:
+		case SNK_RP_1P5_DAM_BIT:
 		return POWER_SUPPLY_TYPEC_SOURCE_MEDIUM;
 	case SNK_RP_3P0_BIT:
+		case SNK_RP_3P0_DAM_BIT:
 		return POWER_SUPPLY_TYPEC_SOURCE_HIGH;
 	case SNK_RP_SHORT_BIT:
 		return POWER_SUPPLY_TYPEC_NON_COMPLIANT;
-	case SNK_DAM_500MA_BIT:
-	case SNK_DAM_1500MA_BIT:
-	case SNK_DAM_3000MA_BIT:
-		return POWER_SUPPLY_TYPEC_SINK_DEBUG_ACCESSORY;
+	//case SNK_DAM_500MA_BIT:
+	//case SNK_DAM_1500MA_BIT:
+	//case SNK_DAM_3000MA_BIT:
+	//	return POWER_SUPPLY_TYPEC_SINK_DEBUG_ACCESSORY;
 	default:
 		break;
 	}
@@ -5372,6 +5436,7 @@ static void update_sw_icl_max(struct smb_charger *chg, int pst)
 	/* rp-std or legacy, USB BC 1.2 */
 	switch (pst) {
 	case POWER_SUPPLY_TYPE_USB:
+		pr_err("hzn::sdp-------\n");
 		/*
 		 * USB_PSY will vote to increase the current to 500/900mA once
 		 * enumeration is done.
@@ -5386,14 +5451,17 @@ static void update_sw_icl_max(struct smb_charger *chg, int pst)
 		vote(chg->usb_icl_votable, SW_ICL_MAX_VOTER, false, 0);
 		break;
 	case POWER_SUPPLY_TYPE_USB_CDP:
+		pr_err("hzn::cdp-------\n");
 		vote(chg->usb_icl_votable, SW_ICL_MAX_VOTER, true,
 					CDP_CURRENT_UA);
 		break;
 	case POWER_SUPPLY_TYPE_USB_DCP:
+		pr_err("hzn::dcp-------\n");
 		rp_ua = get_rp_based_dcp_current(chg, typec_mode);
 		vote(chg->usb_icl_votable, SW_ICL_MAX_VOTER, true, rp_ua);
 		break;
 	case POWER_SUPPLY_TYPE_USB_FLOAT:
+		pr_err("hzn::float-------\n");
 		/*
 		 * limit ICL to 100mA, the USB driver will enumerate to check
 		 * if this is a SDP and appropriately set the current
@@ -7054,8 +7122,13 @@ static void jeita_update_work(struct work_struct *work)
 		goto out;
 	}
 
+#ifdef DUAL_85_VERSION
+	rc = of_property_read_u32_array(pnode, "ontim,jeita-hard-thresholds",
+				jeita_hard_thresholds, 2);
+#else
 	rc = of_property_read_u32_array(pnode, "qcom,jeita-hard-thresholds",
 				jeita_hard_thresholds, 2);
+#endif
 	if (!rc) {
 		rc = smblib_update_jeita(chg, jeita_hard_thresholds,
 					JEITA_HARD);

@@ -18,8 +18,15 @@
 #include <linux/regulator/rpm-smd-regulator.h>
 #include <linux/regulator/consumer.h>
 
+#include "cam_sensor_efuse_id.h"
+
+
 #undef CDBG
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
+
+
+extern struct mutex *msm_sensor_power_mutex;
+
 
 static struct msm_camera_i2c_fn_t msm_sensor_cci_func_tbl;
 static struct msm_camera_i2c_fn_t msm_sensor_secure_func_tbl;
@@ -158,6 +165,7 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	const char *sensor_name;
 	uint32_t retry = 0;
 
+
 	if (!s_ctrl) {
 		pr_err("%s:%d failed: %pK\n",
 			__func__, __LINE__, s_ctrl);
@@ -214,7 +222,23 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 				s_ctrl->sensor_device_type, sensor_i2c_client);
 			msleep(20);
 			continue;
-		} else {
+		}
+        else 
+        {
+/*             
+            pr_info("[%s](%d)  yzm_id   sensor_id=0x%x  sensor_name=%s \n",
+                __func__, __LINE__, 
+                s_ctrl->sensordata->slave_info->sensor_id,
+                s_ctrl->sensordata->sensor_name);
+ */
+
+            rc = get_CameName_and_EfuseId(s_ctrl);
+            if (rc < 0) {
+                pr_err("%s:%d failed:  get CameName EfuseId error \n",
+                    __func__, __LINE__);
+            }
+                     
+                    
 			break;
 		}
 	}
@@ -283,8 +307,8 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 		return rc;
 	}
 
-	pr_debug("%s: read id: 0x%x expected id 0x%x:\n",
-			__func__, chipid, slave_info->sensor_id);
+	pr_info("[%s](%d)  yzm_id read id: 0x%x expected id 0x%x:\n",
+			__func__, __LINE__, chipid, slave_info->sensor_id);
 	if (msm_sensor_id_by_mask(s_ctrl, chipid) != slave_info->sensor_id) {
 		pr_err("%s chip id %x does not match %x\n",
 				__func__, chipid, slave_info->sensor_id);
@@ -791,8 +815,16 @@ static int msm_sensor_config32(struct msm_sensor_ctrl_t *s_ctrl,
 		if (s_ctrl->func_tbl->sensor_power_up) {
 			if (s_ctrl->sensordata->misc_regulator)
 				msm_sensor_misc_regulator(s_ctrl, 1);
-
+            
+            pr_info("[%s](%d)  yzm_ccis before  msm_sensor_power_mutex \n", __func__, __LINE__);
+            mutex_lock(msm_sensor_power_mutex);
+            
+            pr_info("[%s](%d)  yzm_ccis   sensor_power_up  begin \n", __func__, __LINE__);
 			rc = s_ctrl->func_tbl->sensor_power_up(s_ctrl);
+            pr_info("[%s](%d)  yzm_ccis  sensor_power_up  end  \n", __func__, __LINE__);
+            
+            mutex_unlock(msm_sensor_power_mutex);
+
 			if (rc < 0) {
 				pr_err("%s:%d failed rc %d\n", __func__,
 					__LINE__, rc);

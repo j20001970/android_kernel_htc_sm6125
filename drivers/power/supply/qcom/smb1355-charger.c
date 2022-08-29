@@ -796,6 +796,7 @@ static int smb1355_parallel_get_prop(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_INPUT_SUSPEND:
 		val->intval = chip->disabled;
+		pr_err("hzn::smb1355_INPUT_SUSPEND(disabled) = %d\n", val->intval);
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
 		rc = smb1355_get_prop_voltage_max(chip, val);

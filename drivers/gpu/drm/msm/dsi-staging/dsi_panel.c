@@ -435,6 +435,16 @@ static int dsi_panel_power_on(struct dsi_panel *panel)
 {
 	int rc = 0;
 
+	if(panel->lcd_reset_set_flag)
+	{
+		if (gpio_is_valid(panel->reset_config.reset_gpio))
+		{
+			gpio_set_value(panel->reset_config.reset_gpio, 0);
+			pr_err("cst------lcd_reset_gpio set to low-----\n");
+			msleep(4);
+		}
+	}
+
 	rc = dsi_pwr_enable_regulator(&panel->power_info, true);
 	if (rc) {
 		pr_err("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
@@ -478,8 +488,11 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
 		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
 
-	if (gpio_is_valid(panel->reset_config.reset_gpio))
-		gpio_set_value(panel->reset_config.reset_gpio, 0);
+	if(!panel->lcd_reset_set_flag)
+	{
+		if (gpio_is_valid(panel->reset_config.reset_gpio))
+			gpio_set_value(panel->reset_config.reset_gpio, 0);
+	}
 
 	if (gpio_is_valid(panel->reset_config.lcd_mode_sel_gpio))
 		gpio_set_value(panel->reset_config.lcd_mode_sel_gpio, 0);
@@ -2127,6 +2140,11 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 		pr_err("[%s] failed get reset gpio, rc=%d\n", panel->name, rc);
 		goto error;
 	}
+
+	panel->lcd_reset_set_flag =
+		utils->read_bool(utils->data, "ontim,lcd-reset-set-flag");
+	pr_info("%s: lcd_reset_set_flag %s\n", __func__,
+		(panel->lcd_reset_set_flag ? "enabled" : "disabled"));
 
 	panel->reset_config.disp_en_gpio = utils->get_named_gpio(utils->data,
 						"qcom,5v-boost-gpio",
